@@ -763,10 +763,15 @@ print("current time:-", dt.now())
 
 try:
     # Connect to an existing database
+    #connection = psycopg2.connect(user="HpboOFRzmUlEFtPjWZvYTDFNNKuxMavN",
+    #                              password="aqTKjhGTvyfRHSfaoG2IBcE9D3vFWOHN22btHNrTFaWSTgEIyyKsepMHrMctz4Eh",
+    #                              host="localhost",
+    #                              port="5431",
+    #                              database="agos_server")
     connection = psycopg2.connect(user="HpboOFRzmUlEFtPjWZvYTDFNNKuxMavN",
                                   password="aqTKjhGTvyfRHSfaoG2IBcE9D3vFWOHN22btHNrTFaWSTgEIyyKsepMHrMctz4Eh",
                                   host="localhost",
-                                  port="5431",
+                                  port="5432",
                                   database="agos_server")
 
     # Create a cursor to perform database operations
@@ -962,13 +967,13 @@ def generate_combinations(min_size, max_size, L_size, M_size):
                 combinations.append((l, m))
     return combinations
 
-df_raws = pd.DataFrame(record, columns=['id','ac_register','actual_flight_time', 'aircraft', 'bay', 'belt', 'departure_date','estimate_flight_time', 'flight_number', 'gate','next_station', 'schedule_flight_time','sequence','canceled','finished', 'working', 'created_at', 'updated_at', 'booking_pax','prev_station','type'])
+df_raws = pd.DataFrame(record, columns=['id','ac_register','actual_flight_time', 'aircraft', 'bay', 'belt', 'departure_date','estimate_flight_time', 'flight_number', 'gate','next_station', 'schedule_flight_time','sequence','canceled','finished', 'working', 'created_at', 'updated_at', 'booking_pax','prev_station','type','relate_flight_id'])
 df_raws = df_raws.replace(r'^s*$', float('NaN'), regex = True)
 
 #Filter Shift in UTC TIME
 now = dt.utcnow()
 #Next 8 Hour
-now_start = now - timedelta(hours=2)
+now_start = now - timedelta(hours=3)
 now_stop = now + timedelta(hours=8)
 
 #Define SLA
@@ -978,7 +983,8 @@ sla_minute = timedelta(minutes=10)
 wt_minute = timedelta(minutes=10)
 
 #Read Input File
-Tractor = pd.read_excel(r"C:\Users\ZinZayin\Desktop\TG_JobAssignment\Tractor.xlsx",index_col=0)
+#Tractor = pd.read_excel(r"C:\Users\ZinZayin\Desktop\TG_JobAssignment\Tractor.xlsx",index_col=0)
+Tractor = pd.read_excel(r"/home/itafm350a/Documents/JAA/Tractor.xlsx",index_col=0)
 
 print('Start !!')
 print(dt.utcnow())
@@ -997,7 +1003,7 @@ print(formatted_time_now)
 print(formatted_time_past)
 url = f"http://110.77.148.104:14111/api/task_assignment/?full=true&task__flight__schedule_flight_time__gte={formatted_time_past}&task__flight__schedule_flight_time__lte={formatted_time_now}&limit=200"  # Replace with your API endpoint URL
 headers = {
-    "Authorization": "Bearer IxRuwk4ZsJieidPEecQvuOgBgE6dsV",  # Replace with your actual Bearer token
+    "Authorization": "Bearer yJamCZENZeNUemRVwCRhSX3LqxKHk3",  # Replace with your actual Bearer token
     "Content-Type": "application/json"
 }
 
@@ -1014,7 +1020,7 @@ except requests.exceptions.RequestException as e:
 
 dfs['Tractor'] = dfs['vehicle'].apply(lambda x: x.replace("2P", "2P-"))
 dfs['flight_number'] = dfs['flight'].apply(lambda x: x['flight_number'])
-dfs.to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\dfs.csv')
+#dfs.to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\dfs.csv')
 pair = dfs[['flight_number', 'Tractor']]
 pair.rename(columns={'flight_number': 'flight'}, inplace=True)
 
@@ -1049,11 +1055,11 @@ df_unique = df_unique.sort_values(by=['STD'],ascending=True)
 df_unique = df_unique.reset_index(drop = True)
 #Create START and Finish Time
 df_input = df_unique
-ReqTimeInput = pd.read_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\ReqTime.txt', delimiter=';')
+ReqTimeInput = pd.read_csv(r'/home/itafm350a/Documents/JAA/ReqTime.txt', delimiter=';')
 ReqTimeInput = ReqTimeInput.drop_duplicates(subset=['flight'], keep='last')
-BayInput = pd.read_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\Bay.txt', delimiter=';')
+BayInput = pd.read_csv(r'/home/itafm350a/Documents/JAA/Bay.txt', delimiter=';')
 BayInput = BayInput.drop_duplicates(subset=['flight'], keep='last')
-EditfltInput2 = pd.read_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\fltpair.txt', delimiter=';')
+EditfltInput2 = pd.read_csv(r'/home/itafm350a/Documents/JAA/fltpair.txt', delimiter=';')
 EditfltInput2 = EditfltInput2.drop_duplicates(subset=['flight'], keep='last')
 ReqTimeInput = ReqTimeInput.reset_index(drop=True)
 BayInput = BayInput.reset_index(drop=True)
@@ -1177,7 +1183,7 @@ for i, combo in enumerate(powerset(stuff,mean_GSE2,max_GSE2), 1):
             l += 1
     app_log['M']=m
     app_log['L']=l
-    sim = sim.append(app_log)
+    sim = sim._append(app_log,ignore_index=True)
 
 sim = sim.reset_index(drop=True)
 sim = reduce_sim(sim,df_das)
@@ -1323,9 +1329,9 @@ for idx, (key, value) in enumerate(log2.items()):
         log2[key] = "  "
 
 app_log = pd.DataFrame(log, index=[0])
-Tractor_option = Tractor_option.append(app_log)
+Tractor_option = Tractor_option._append(app_log)
 app_log2 = pd.DataFrame(log2, index=[0])
-Tractor_option2 = Tractor_option2.append(app_log2)
+Tractor_option2 = Tractor_option2._append(app_log2)
 f=f+1
 for j in range(len(first_na)-1):
     if f< int(len(df_das['flight_number'])):
@@ -1351,9 +1357,9 @@ for j in range(len(first_na)-1):
                     log2[key] = "  "
 
         app_log = pd.DataFrame(log, index=[0])
-        Tractor_option = Tractor_option.append(app_log)
+        Tractor_option = Tractor_option._append(app_log)
         app_log2 = pd.DataFrame(log2, index=[0])
-        Tractor_option2 = Tractor_option2.append(app_log2)
+        Tractor_option2 = Tractor_option2._append(app_log2)
     f=f+1
 Tractor_option = Tractor_option.reset_index(drop=True)
 Tractor_option2 = Tractor_option2.reset_index(drop=True)
@@ -1363,10 +1369,10 @@ print(Das_Out)
 print(tractor_stat(Das_Out))
 print("!!!!End")
 print("current time:-", dt.now())
-df_das.to_json(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\df_das.json')
-df_das.to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\df_das.csv')
-tractor_stat(Das_Out).to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\Tractor_stat_out.csv')
-Tractor_option.to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\Tractor_option.csv')
-Tractor_option2.to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\Tractor_option2.csv')
+df_das.to_json(r'/home/itafm350a/Documents/JAA/df_das.json')
+df_das.to_csv(r'/home/itafm350a/Documents/JAA/df_das.csv')
+tractor_stat(Das_Out).to_csv(r'/home/itafm350a/Documents/JAA/Tractor_stat_out.csv')
+Tractor_option.to_csv(r'/home/itafm350a/Documents/JAA/Tractor_option.csv')
+Tractor_option2.to_csv(r'/home/itafm350a/Documents/JAA/Tractor_option2.csv')
 df_show = df_das[['flight_number','aircraft','bay','Time','Tractor']]
-df_show.to_csv(r'C:\Users\ZinZayin\Desktop\TG_JobAssignment\df_show.csv')
+df_show.to_csv(r'/home/itafm350a/Documents/JAA/df_show.csv')
